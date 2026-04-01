@@ -6,7 +6,7 @@ use std::{
     thread,
     time::Duration,
 };
-mod indexing;
+mod index;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -18,7 +18,7 @@ fn main() {
         newindex = false;
     }
 
-    let mut indexes = indexing::Index::new();
+    let mut indexes = index::Index::new();
     indexes.load(newindex);
     for stream in listener.incoming() {
         let stream = stream.unwrap();
