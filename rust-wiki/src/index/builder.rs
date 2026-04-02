@@ -9,7 +9,7 @@ use std::path::PathBuf;
 
 pub fn create_id_name_index(
     paths: &[PathBuf],
-    id_name_path: String,
+    id_name_path: &String,
     id_name_index: &mut HashMap<String, String>,
 ) -> io::Result<()> {
     println!("Creating id_name index...");
@@ -28,7 +28,7 @@ pub fn create_id_name_index(
 
 pub fn create_id_list_index(
     paths: &[PathBuf],
-    id_list_path: String,
+    id_list_path: &String,
     id_list_index: &mut HashMap<i32, Vec<i32>>,
     id_name_index: &mut HashMap<String, String>,
 ) -> io::Result<()> {
@@ -56,10 +56,10 @@ pub fn create_id_list_index(
 }
 
 pub fn pagerank(
-    pagerank_path: String,
+    pagerank_path: &String,
     id_list_index: &mut HashMap<i32, Vec<i32>>,
     page_rank_index: &mut Vec<f64>,
-    page_rank_id_index: &mut Vec<Vec<f64>>,
+    page_rank_id_index: &mut Vec<(f64, f64)>,
 ) -> io::Result<()> {
     println!("Creating pagerank index...");
 
@@ -96,12 +96,12 @@ pub fn pagerank(
         swap(page_rank_index, &mut new_rank);
     }
     for (j, &i) in page_rank_index.iter().enumerate() {
-        page_rank_id_index.push(vec![j as f64, i]);
+        page_rank_id_index.push((j as f64, i));
     }
     let mut file = File::create(pagerank_path)?;
 
     for i in page_rank_id_index.iter() {
-        writeln!(file, "{} {}", i[0], i[1])?;
+        writeln!(file, "{} {}", i.0, i.1)?;
     }
 
     Ok(())
@@ -109,7 +109,7 @@ pub fn pagerank(
 
 pub fn create_word_index(
     paths: &[PathBuf],
-    index_path: String,
+    index_path: &String,
     word_index: &mut HashMap<String, HashMap<i32, i32>>,
 ) -> io::Result<()> {
     println!("Creating word index...");

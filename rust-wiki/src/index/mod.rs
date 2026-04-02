@@ -15,8 +15,14 @@ pub(super) struct Index {
     id_name_index: HashMap<String, String>,
     id_list_index: HashMap<i32, Vec<i32>>,
     page_rank_index: Vec<f64>,
-    page_rank_id_index: Vec<Vec<f64>>,
+    page_rank_id_index: Vec<(f64, f64)>,
     word_index: HashMap<String, HashMap<i32, i32>>,
+    id_name_path: String,
+    id_list_path: String,
+    page_rank_path: String,
+    word_index_path: String,
+    data_path: String,
+    dataset_path: String,
 }
 
 impl Index {
@@ -27,54 +33,56 @@ impl Index {
             page_rank_index: Vec::new(),
             page_rank_id_index: Vec::new(),
             word_index: HashMap::new(),
+            id_name_path: String::from("../data/id_name.json"),
+            id_list_path: String::from("../data/id_list.json"),
+            page_rank_path: String::from("../data/pagerank_vals.txt"),
+            word_index_path: String::from("../data/word_index.json"),
+            data_path: String::from("../data/"),
+            dataset_path: String::from("../Article/"),
         }
     }
 
     pub fn load(&mut self, new_idx: bool) {
-        let data_path = String::from("data/");
-
-        match fs::read_dir(data_path) {
+        match fs::read_dir(&self.data_path) {
             Err(why) => println!("! {:?}", why.kind()),
             Ok(paths) => {
-                if paths.count() != 3 || new_idx {
+                if paths.count() != 4 || new_idx {
                     self.create_indexes().unwrap();
                 } else {
-                    self.load_indexes();
+                    self.load_indexes().unwrap();
                 }
             }
         }
     }
 
     fn create_indexes(&mut self) -> io::Result<()> {
-        let dataset_path = String::from("Article/");
-        let id_name_path = String::from("data/id_name.json");
-        let id_list_path = String::from("data/id_list.json");
-        let page_rank_path = String::from("data/pagerank_vals.txt");
-        let word_index_path = String::from("data/word_index.json");
-
-        let paths: Vec<std::path::PathBuf> = fs::read_dir(dataset_path)?
+        let paths: Vec<std::path::PathBuf> = fs::read_dir(&self.dataset_path)?
             .filter_map(|entry| entry.ok())
             .map(|entry| entry.path())
             .collect();
 
-        builder::create_id_name_index(&paths, id_name_path, &mut self.id_name_index)?;
+        builder::create_id_name_index(&paths, &self.id_name_path, &mut self.id_name_index)?;
         builder::create_id_list_index(
             &paths,
-            id_list_path,
+            &self.id_list_path,
             &mut self.id_list_index,
             &mut self.id_name_index,
         )?;
         builder::pagerank(
-            page_rank_path,
+            &self.page_rank_path,
             &mut self.id_list_index,
             &mut self.page_rank_index,
             &mut self.page_rank_id_index,
         )?;
-        builder::create_word_index(&paths, word_index_path, &mut self.word_index)?;
+        builder::create_word_index(&paths, &self.word_index_path, &mut self.word_index)?;
         Ok(())
     }
 
     fn load_indexes(&mut self) -> io::Result<()> {
+        self.id_name_index = index_io::load_id_name_index(&self.id_name_path);
+        self.id_list_index = index_io::load_id_list_index(&self.id_list_path);
+        self.page_rank_id_index = index_io::load_page_rank_index(&self.page_rank_path);
+        self.word_index = index_io::load_word_index(&self.word_index_path);
         Ok(())
     }
 }
