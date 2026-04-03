@@ -33,12 +33,12 @@ impl Index {
             page_rank_index: Vec::new(),
             page_rank_id_index: Vec::new(),
             word_index: HashMap::new(),
-            id_name_path: String::from("../data/id_name.json"),
-            id_list_path: String::from("../data/id_list.json"),
-            page_rank_path: String::from("../data/pagerank_vals.txt"),
-            word_index_path: String::from("../data/word_index.json"),
-            data_path: String::from("../data/"),
-            dataset_path: String::from("../Article/"),
+            id_name_path: String::from("./data/id_name.json"),
+            id_list_path: String::from("./data/id_list.json"),
+            page_rank_path: String::from("./data/pagerank_vals.txt"),
+            word_index_path: String::from("./data/word_index.json"),
+            data_path: String::from("./data/"),
+            dataset_path: String::from("./Article/"),
         }
     }
 
@@ -46,7 +46,10 @@ impl Index {
         match fs::read_dir(&self.data_path) {
             Err(why) => println!("! {:?}", why.kind()),
             Ok(paths) => {
-                if paths.count() != 4 || new_idx {
+                let i = paths.count();
+                println!("{}", i);
+                if i < 4 || new_idx {
+                    println!("loading indexes");
                     self.create_indexes().unwrap();
                 } else {
                     self.load_indexes().unwrap();

@@ -6,6 +6,7 @@ use std::{
     thread,
     time::Duration,
 };
+mod autocomplete;
 mod index;
 
 fn main() {
@@ -20,6 +21,8 @@ fn main() {
 
     let mut indexes = index::Index::new();
     indexes.load(newindex);
+    let mut autocomplete_sys = autocomplete::AutoCompl::new();
+    autocomplete_sys.load(newindex);
     for stream in listener.incoming() {
         let stream = stream.unwrap();
         handle_connection(stream);
