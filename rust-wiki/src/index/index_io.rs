@@ -7,11 +7,20 @@ use std::mem::swap;
 use std::path::Path;
 use std::path::PathBuf;
 
-pub fn load_id_name_index(id_name_path: &String) -> HashMap<String, String> {
+pub fn load_id_name_index(id_name_path: &String) -> HashMap<String, i32> {
     let file = File::open(id_name_path).unwrap();
     let reader = BufReader::new(file);
 
-    let map: HashMap<String, String> = serde_json::from_reader(reader).unwrap();
+    let map: HashMap<String, i32> = serde_json::from_reader(reader).unwrap();
+
+    map
+}
+
+pub fn load_name_id_index(name_id_path: &String) -> HashMap<i32, String> {
+    let file = File::open(name_id_path).unwrap();
+    let reader = BufReader::new(file);
+
+    let map: HashMap<i32, String> = serde_json::from_reader(reader).unwrap();
 
     map
 }

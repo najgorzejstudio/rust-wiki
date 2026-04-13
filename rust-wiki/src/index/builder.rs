@@ -10,19 +10,26 @@ use std::path::PathBuf;
 pub fn create_id_name_index(
     paths: &[PathBuf],
     id_name_path: &String,
-    id_name_index: &mut HashMap<String, String>,
+    name_id_path: &String,
+    id_name_index: &mut HashMap<String, i32>,
+    name_id_index: &mut HashMap<i32, String>,
 ) -> io::Result<()> {
     println!("Creating id_name index...");
 
     for path in paths {
         let name: String = fs::read_to_string(path.join("articleLink.txt")).unwrap();
-        let id: String = path.file_name().unwrap().to_str().unwrap().to_string();
+        let id: i32 = path.file_name().unwrap().to_str().unwrap().parse().unwrap();
 
-        id_name_index.insert(name, id);
+        id_name_index.insert(name.clone(), id);
+        name_id_index.insert(id, name);
     }
-    let json = serde_json::to_string(&id_name_index).unwrap();
+    let json = serde_json::to_string(&id_name_index)?;
     let mut f = File::create(id_name_path)?;
     f.write_all(json.as_bytes())?;
+
+    let json2 = serde_json::to_string(&name_id_index)?;
+    let mut f2 = File::create(name_id_path)?;
+    f2.write_all(json2.as_bytes())?;
     Ok(())
 }
 
@@ -30,24 +37,24 @@ pub fn create_id_list_index(
     paths: &[PathBuf],
     id_list_path: &String,
     id_list_index: &mut HashMap<i32, Vec<i32>>,
-    id_name_index: &mut HashMap<String, String>,
+    id_name_index: &mut HashMap<String, i32>,
 ) -> io::Result<()> {
     println!("Creating id_list index...");
 
     for path in paths {
-        let id: String = path.file_name().unwrap().to_str().unwrap().to_string();
+        let id: i32 = path.file_name().unwrap().to_str().unwrap().parse().unwrap();
         let file = File::open(path.join("bodyLinks.txt"))?;
         let reader = BufReader::new(file);
         let mut link_list: Vec<i32> = Vec::new();
 
         for line in reader.lines() {
             if let Some(i) = id_name_index.get(&line.unwrap()) {
-                if !link_list.contains(&i.parse().unwrap()) {
+                if !link_list.contains(&i) {
                     link_list.push(i.to_string().clone().parse().unwrap());
                 }
             }
         }
-        id_list_index.insert(id.to_string().parse().unwrap(), link_list.clone());
+        id_list_index.insert(id, link_list.clone());
     }
     let json = serde_json::to_string(&id_list_index)?;
     let mut f = File::create(id_list_path)?;

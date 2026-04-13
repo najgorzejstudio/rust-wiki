@@ -12,12 +12,14 @@ pub mod index_io;
 
 #[derive(Serialize, Deserialize)]
 pub(super) struct Index {
-    id_name_index: HashMap<String, String>,
+    id_name_index: HashMap<String, i32>,
+    name_id_index: HashMap<i32, String>,
     id_list_index: HashMap<i32, Vec<i32>>,
     page_rank_index: Vec<f64>,
     page_rank_id_index: Vec<(f64, f64)>,
     word_index: HashMap<String, HashMap<i32, i32>>,
     id_name_path: String,
+    name_id_path: String,
     id_list_path: String,
     page_rank_path: String,
     word_index_path: String,
@@ -29,11 +31,13 @@ impl Index {
     pub fn new() -> Self {
         Self {
             id_name_index: HashMap::new(),
+            name_id_index: HashMap::new(),
             id_list_index: HashMap::new(),
             page_rank_index: Vec::new(),
             page_rank_id_index: Vec::new(),
             word_index: HashMap::new(),
             id_name_path: String::from("./data/id_name.json"),
+            name_id_path: String::from("./data/name_id.json"),
             id_list_path: String::from("./data/id_list.json"),
             page_rank_path: String::from("./data/pagerank_vals.txt"),
             word_index_path: String::from("./data/word_index.json"),
@@ -64,7 +68,13 @@ impl Index {
             .map(|entry| entry.path())
             .collect();
 
-        builder::create_id_name_index(&paths, &self.id_name_path, &mut self.id_name_index)?;
+        builder::create_id_name_index(
+            &paths,
+            &self.id_name_path,
+            &self.name_id_path,
+            &mut self.id_name_index,
+            &mut self.name_id_index,
+        )?;
         builder::create_id_list_index(
             &paths,
             &self.id_list_path,
@@ -83,9 +93,18 @@ impl Index {
 
     fn load_indexes(&mut self) -> io::Result<()> {
         self.id_name_index = index_io::load_id_name_index(&self.id_name_path);
+        self.name_id_index = index_io::load_name_id_index(&self.name_id_path);
         self.id_list_index = index_io::load_id_list_index(&self.id_list_path);
         self.page_rank_id_index = index_io::load_page_rank_index(&self.page_rank_path);
         self.word_index = index_io::load_word_index(&self.word_index_path);
         Ok(())
+    }
+
+    pub fn get_pagerank(&self) -> &Vec<(f64, f64)> {
+        &self.page_rank_id_index
+    }
+
+    pub fn get_name_id(&self) -> &HashMap<i32, String> {
+        &self.name_id_index
     }
 }
