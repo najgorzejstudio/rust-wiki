@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::{self, File};
-use std::io::{self, Write};
+use std::io::{self, Result, Write};
 use std::path::Path;
 
 pub mod trie;
@@ -28,15 +28,16 @@ impl AutoCompl {
         }
     }
 
-    pub fn load(&mut self, new_idx: bool, pagerank: &Vec<(f64, f64)>) {
+    pub fn load(&mut self, new_idx: bool, pagerank: &Vec<(f64, f64)>) -> Result<()> {
         if !Path::new(&self.trie_path).exists() || new_idx {
-            self.create_prie(pagerank).unwrap();
+            self.create_prie(pagerank)?;
         } else {
-            self.load_prie().unwrap();
+            self.load_prie()?;
         }
+        Ok(())
     }
 
-    fn create_prie(&mut self, pagerank: &Vec<(f64, f64)>) -> io::Result<()> {
+    fn create_prie(&mut self, pagerank: &Vec<(f64, f64)>) -> Result<()> {
         let paths: Vec<std::path::PathBuf> = fs::read_dir(&self.dataset_path)
             .expect("dataset_path")
             .filter_map(|entry| entry.ok())
@@ -47,8 +48,8 @@ impl AutoCompl {
         Ok(())
     }
 
-    fn load_prie(&mut self) -> io::Result<()> {
-        self.trie = trie::load_prefix_tree(&self.trie_path);
+    fn load_prie(&mut self) -> Result<()> {
+        self.trie = trie::load_prefix_tree(&self.trie_path)?;
         Ok(())
     }
 
@@ -57,37 +58,39 @@ impl AutoCompl {
         text: &String,
         auto_path: &str,
         name_index: &HashMap<i32, String>,
-    ) -> (String, String) {
-        let mut line: String = text.clone();
-        line = line.strip_prefix("GET /api/search?q=").unwrap().to_string();
-        let line_clean = line
-            .strip_suffix(" HTTP/1.1")
-            .unwrap()
-            .to_string()
+    ) -> Result<(String, String)> {
+        let line_clean = text
+            .strip_prefix("GET /api/search?q=")
+            .and_then(|s| s.strip_suffix(" HTTP/1.1"))
+            .ok_or_else(|| {
+                std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid request")
+            })?
             .to_lowercase();
         let letters: Vec<char> = line_clean.chars().collect();
         let list = trie::search_trie(letters, &self.trie);
         let mut titles: Vec<(String, String)> = vec![];
         for id in list {
-            let link = name_index[&id.0].clone();
-            let title = name_index[&id.0]
-                .clone()
+            let link = match name_index.get(&id.0) {
+                Some(l) => l,
+                None => continue,
+            };
+            let title = link
                 .strip_prefix("https://en.wikipedia.org//wiki/")
-                .unwrap()
+                .unwrap_or(link)
                 .replace("_", " ")
                 .replace("%", " ")
                 .trim()
                 .to_string();
-            titles.push((title, link));
+            titles.push((title, link.clone()));
         }
 
-        let json = serde_json::to_string(&titles).unwrap();
-        let mut f = File::create(auto_path).unwrap();
-        f.write_all(json.as_bytes()).unwrap();
-        (
+        let json = serde_json::to_string(&titles)?;
+        let mut f = File::create(auto_path)?;
+        f.write_all(json.as_bytes())?;
+        Ok((
             "HTTP/1.1 200 OK\r\nContent-Type: application/json".to_string(),
             auto_path.to_string(),
-        )
+        ))
     }
 }
 

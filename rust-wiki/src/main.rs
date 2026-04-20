@@ -12,14 +12,11 @@ mod results;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let listener = TcpListener::bind("127.0.0.1:7878").unwrap(); //handle errors
-    let newindex: bool;
-    if args[0] == "newindex" {
-        newindex = true;
-    } else {
-        newindex = false;
-    }
-
+    let listener = TcpListener::bind("127.0.0.1:7878").expect("Failed to bind to 127.0.0.1:7878");
+    let newindex = match args.get(1) {
+        Some(arg) if arg == "newindex" => true,
+        _ => false,
+    };
     let mut indexes = index::Index::new();
     indexes.load(newindex);
 
@@ -34,7 +31,9 @@ fn main() {
     );
     for stream in listener.incoming() {
         let stream = stream.unwrap();
-        conn.handle_connection(stream);
+        if let Err(e) = conn.handle_connection(stream) {
+            eprintln!("Error handling connection: {}", e);
+        }
     }
 }
 
@@ -63,7 +62,9 @@ impl<'a> Connections<'a> {
     pub fn handle_connection(&mut self, mut stream: TcpStream) -> Result<(), std::io::Error> {
         let auto_path = "./src/auto.json";
         let buf_reader = BufReader::new(&stream);
-        let request_line = buf_reader.lines().next().unwrap().unwrap();
+        let request_line = buf_reader.lines().next().ok_or_else(|| {
+            std::io::Error::new(std::io::ErrorKind::UnexpectedEof, "Empty request")
+        })??;
 
         let (status_line, filename) = match request_line.as_str() {
             s if s.starts_with("GET / ") => (
@@ -75,14 +76,14 @@ impl<'a> Connections<'a> {
             }
             s if s.starts_with("GET /api/search?q=") => {
                 self.autocomplete
-                    .complete(&request_line, auto_path, self.name_index)
+                    .complete(&request_line, auto_path, self.name_index)?
             }
             s if s.starts_with("GET /api/result?q=") => results::get_results(
                 &request_line,
                 &self.page_rank,
                 self.word_index,
                 self.name_index,
-            ),
+            )?,
             _ => (
                 "HTTP/1.1 404 NOT FOUND".to_string(),
                 "./src/404.html".to_string(),
@@ -94,7 +95,7 @@ impl<'a> Connections<'a> {
 
         let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
 
-        stream.write_all(response.as_bytes()).unwrap();
+        stream.write_all(response.as_bytes())?;
         println!("Request: {request_line:#?}");
         Ok(())
     }

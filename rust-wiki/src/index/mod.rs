@@ -44,16 +44,21 @@ impl Index {
 
     pub fn load(&mut self, new_idx: bool) {
         match fs::read_dir(&self.data_path) {
-            Err(why) => println!("! {:?}", why.kind()),
-            Ok(paths) => {
-                let i = paths.count();
-                println!("{}", i);
-                if i < 4 || new_idx {
-                    println!("loading indexes");
-                    self.create_indexes().unwrap();
+            Ok(_) => {
+                if new_idx {
+                    println!("Forcing index rebuild...");
+                    self.create_indexes().expect("Failed creating indexes");
                 } else {
-                    self.load_indexes().unwrap();
+                    println!("Trying to load indexes...");
+                    if let Err(e) = self.load_indexes() {
+                        eprintln!("Loading failed: {}. Rebuilding...", e);
+                        self.create_indexes().expect("Failed creating indexes");
+                    }
                 }
+            }
+            Err(_) => {
+                println!("Data directory missing. Creating indexes...");
+                self.create_indexes().expect("Failed creating indexes");
             }
         }
     }
@@ -88,11 +93,11 @@ impl Index {
     }
 
     fn load_indexes(&mut self) -> io::Result<()> {
-        self.id_name_index = index_io::load_id_name_index(&self.id_name_path);
-        self.name_id_index = index_io::load_name_id_index(&self.name_id_path);
-        self.id_list_index = index_io::load_id_list_index(&self.id_list_path);
-        self.page_rank_id_index = index_io::load_page_rank_index(&self.page_rank_path);
-        self.word_index = index_io::load_word_index(&self.word_index_path);
+        self.id_name_index = index_io::load_id_name_index(&self.id_name_path)?;
+        self.name_id_index = index_io::load_name_id_index(&self.name_id_path)?;
+        self.id_list_index = index_io::load_id_list_index(&self.id_list_path)?;
+        self.page_rank_id_index = index_io::load_page_rank_index(&self.page_rank_path)?;
+        self.word_index = index_io::load_word_index(&self.word_index_path)?;
         Ok(())
     }
 

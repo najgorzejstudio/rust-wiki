@@ -1,10 +1,7 @@
-use serde::{Deserialize, Serialize};
-use serde_json::{Result, Value};
 use std::collections::HashMap;
 use std::fs::{self, File};
-use std::io::{self, BufReader, LineWriter, Write, prelude::*};
+use std::io::{self, BufReader, Write, prelude::*};
 use std::mem::swap;
-use std::path::Path;
 use std::path::PathBuf;
 
 pub fn create_id_name_index(
@@ -17,8 +14,14 @@ pub fn create_id_name_index(
     println!("Creating id_name index...");
 
     for path in paths {
-        let name: String = fs::read_to_string(path.join("articleLink.txt")).unwrap();
-        let id: i32 = path.file_name().unwrap().to_str().unwrap().parse().unwrap();
+        let name: String = fs::read_to_string(path.join("articleLink.txt"))?;
+        let id: i32 = path
+            .file_name()
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "Missing filename"))?
+            .to_str()
+            .unwrap()
+            .parse()
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
         id_name_index.insert(name.clone(), id);
         name_id_index.insert(id, name);
@@ -42,7 +45,14 @@ pub fn create_id_list_index(
     println!("Creating id_list index...");
 
     for path in paths {
-        let id: i32 = path.file_name().unwrap().to_str().unwrap().parse().unwrap();
+        let id: i32 = path
+            .file_name()
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "Missing filename"))?
+            .to_str()
+            .unwrap()
+            .parse()
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+
         let file = File::open(path.join("bodyLinks.txt"))?;
         let reader = BufReader::new(file);
         let mut link_list: Vec<i32> = Vec::new();
@@ -139,17 +149,17 @@ pub fn create_word_index(
     for path in paths {
         let id: i32 = path
             .file_name()
-            .unwrap()
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "Missing filename"))?
             .to_str()
             .unwrap()
-            .to_string()
             .parse()
-            .unwrap();
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+
         let file = File::open(path.join("bodyText.txt"))?;
         let reader = BufReader::new(file);
 
         for line in reader.lines() {
-            let split = line.unwrap();
+            let split = line?;
             let split_line = split.split_whitespace();
             for word in split_line {
                 let word = word.to_string();
