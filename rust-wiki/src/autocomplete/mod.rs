@@ -1,18 +1,14 @@
 use serde::{Deserialize, Serialize};
-use serde_json::{Result, Value};
 use std::collections::HashMap;
 use std::fs::{self, File};
-use std::io::{self, BufReader, LineWriter, Write, prelude::*};
-use std::mem::swap;
+use std::io::{self, Write};
 use std::path::Path;
-use std::path::PathBuf;
 
 pub mod trie;
 
 pub(super) struct AutoCompl {
     trie: TrieNode,
     trie_path: String,
-    data_path: String,
     dataset_path: String,
 }
 
@@ -27,9 +23,8 @@ impl AutoCompl {
     pub fn new() -> Self {
         Self {
             trie: TrieNode::new(),
-            trie_path: String::from("./data/prie.json"),
-            data_path: String::from("../data/"),
-            dataset_path: String::from("./Article/"),
+            trie_path: String::from("./src/data/prie.json"),
+            dataset_path: String::from("./src/Article/"),
         }
     }
 
@@ -71,7 +66,7 @@ impl AutoCompl {
             .to_string()
             .to_lowercase();
         let letters: Vec<char> = line_clean.chars().collect();
-        let mut list = trie::search_trie(letters, &self.trie);
+        let list = trie::search_trie(letters, &self.trie);
         let mut titles: Vec<(String, String)> = vec![];
         for id in list {
             let link = name_index[&id.0].clone();

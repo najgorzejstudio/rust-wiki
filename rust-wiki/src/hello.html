@@ -4,17 +4,39 @@
 <head>
 	<meta charset="utf-8">
 	<title>WikiSearch</title>
+	<style>
+		#search_div {
+			width: 50%;
+			float: left;
+		}
+
+		#result_div {
+			width: 50%;
+			float: right;
+			justify-content: center;
+			align-items: center;
+			background-color: lightgray;
+			height: 100%;
+		}
+	</style>
 </head>
 
 <body>
-	<h1>Welcome to Wikipedia Search Engine</h1>
-	<h2>In rust!</h2>
-	<input id="searchbar">
-	<button>Search</button>
-	<ul id="auto_list">
+	<div id="search_div">
+		<h1>Welcome to Wikipedia Search Engine</h1>
+		<h2>In rust!</h2>
+		<input id="searchbar">
+		<button id="search_button">Search</button>
+		<ul id="auto_list">
+		</ul>
+	</div>
 
-	</ul>
+	<div id="result_div">
+		<h1>Results!</h1>
+		<ol id="result_list">
 
+		</ol>
+	</div>
 	<script src="script.js"></script>
 </body>
 

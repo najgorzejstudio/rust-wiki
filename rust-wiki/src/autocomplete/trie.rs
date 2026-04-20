@@ -1,11 +1,6 @@
 use super::TrieNode;
-use serde::{Deserialize, Serialize};
-use serde_json::{Result, Value};
-use std::collections::HashMap;
 use std::fs::{self, File};
-use std::io::{self, BufReader, LineWriter, Write, prelude::*};
-use std::mem::swap;
-use std::path::Path;
+use std::io::{self, BufReader};
 use std::path::PathBuf;
 
 pub fn create_prefix_tree(
@@ -16,7 +11,7 @@ pub fn create_prefix_tree(
 ) -> io::Result<()> {
     println!("Creating trie");
     for path in paths {
-        let mut id: i32 = path.file_name().unwrap().to_str().unwrap().parse().unwrap();
+        let id: i32 = path.file_name().unwrap().to_str().unwrap().parse().unwrap();
         let mut name: String = fs::read_to_string(path.join("articleLink.txt"))
             .expect("articlelink")
             .to_string();
@@ -43,7 +38,7 @@ pub fn create_prefix_tree(
         }
         trie_index.is_end = true;
     }
-    let mut f = File::create(trie_path)?;
+    let f = File::create(trie_path)?;
     bincode::serialize_into(f, &trie).unwrap();
     Ok(())
 }

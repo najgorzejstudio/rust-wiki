@@ -1,11 +1,7 @@
 use serde::{Deserialize, Serialize};
-use serde_json::{Result, Value};
 use std::collections::HashMap;
-use std::fs::{self, File};
-use std::io::{self, BufReader, LineWriter, Write, prelude::*};
-use std::mem::swap;
-use std::path::Path;
-use std::path::PathBuf;
+use std::fs::{self};
+use std::io::{self};
 
 pub mod builder;
 pub mod index_io;
@@ -36,13 +32,13 @@ impl Index {
             page_rank_index: Vec::new(),
             page_rank_id_index: Vec::new(),
             word_index: HashMap::new(),
-            id_name_path: String::from("./data/id_name.json"),
-            name_id_path: String::from("./data/name_id.json"),
-            id_list_path: String::from("./data/id_list.json"),
-            page_rank_path: String::from("./data/pagerank_vals.txt"),
-            word_index_path: String::from("./data/word_index.json"),
-            data_path: String::from("./data/"),
-            dataset_path: String::from("./Article/"),
+            id_name_path: String::from("./src/data/id_name.json"),
+            name_id_path: String::from("./src/data/name_id.json"),
+            id_list_path: String::from("./src/data/id_list.json"),
+            page_rank_path: String::from("./src/data/pagerank_vals.txt"),
+            word_index_path: String::from("./src/data/word_index.json"),
+            data_path: String::from("./src/data/"),
+            dataset_path: String::from("./src/Article/"),
         }
     }
 
@@ -104,7 +100,19 @@ impl Index {
         &self.page_rank_id_index
     }
 
+    pub fn get_pagerank_hash(&self) -> HashMap<i32, f64> {
+        let mut pagerank_hash: HashMap<i32, f64> = HashMap::new();
+        for i in &self.page_rank_id_index {
+            pagerank_hash.insert(i.0 as i32, i.1);
+        }
+        pagerank_hash
+    }
+
     pub fn get_name_id(&self) -> &HashMap<i32, String> {
         &self.name_id_index
+    }
+
+    pub fn get_word_index(&self) -> &HashMap<String, HashMap<i32, i32>> {
+        &self.word_index
     }
 }
