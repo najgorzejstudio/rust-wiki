@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::{self, File};
-use std::io::{self, Result, Write};
+use std::io::{Result, Write};
 use std::path::Path;
 
 pub mod trie;
@@ -81,6 +81,7 @@ impl AutoCompl {
                 .replace("%", " ")
                 .trim()
                 .to_string();
+            println!("{}", &title);
             titles.push((title, link.clone()));
         }
 

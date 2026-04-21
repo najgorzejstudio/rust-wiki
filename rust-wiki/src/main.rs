@@ -12,16 +12,22 @@ mod results;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let listener = TcpListener::bind("127.0.0.1:7878").expect("Failed to bind to 127.0.0.1:7878");
+    let listener = TcpListener::bind("0.0.0.0:7878").expect("Failed to bind to 127.0.0.1:7878");
     let newindex = match args.get(1) {
         Some(arg) if arg == "newindex" => true,
         _ => false,
     };
+    if let Err(e) = std::fs::create_dir_all("./src/data") {
+        eprintln!("Failed to create data directory: {}", e);
+    }
+
     let mut indexes = index::Index::new();
     indexes.load(newindex);
 
     let mut autocomplete_sys = autocomplete::AutoCompl::new();
-    autocomplete_sys.load(newindex, indexes.get_pagerank());
+    autocomplete_sys
+        .load(newindex, indexes.get_pagerank())
+        .expect("failed to load autocomplete system");
 
     let mut conn = Connections::new(
         &mut autocomplete_sys,

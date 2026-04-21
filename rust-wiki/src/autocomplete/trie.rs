@@ -19,8 +19,8 @@ pub fn create_prefix_tree(
             .parse()
             .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
         let mut name: String = fs::read_to_string(path.join("articleLink.txt"))?.to_string();
-        name = name.replace("_", "%20").trim().to_string();
-        let name = match name.strip_prefix("https://en.wikipedia.org/wiki/") {
+        name = name.replace("_", " ").trim().to_lowercase().to_string();
+        let name = match name.strip_prefix("https://en.wikipedia.org//wiki/") {
             Some(n) => n,
             None => {
                 eprintln!("bad prefix in: {} {}", id, name);
