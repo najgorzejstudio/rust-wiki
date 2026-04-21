@@ -39,38 +39,55 @@ Download a dataset containing Wikipedia articles and place it in:
 ```
 ./src/Article/
 ```
-##Dataset Structure
+## Dataset Structure
 
 Each article is stored as a separate folder inside:
 
+```
 ./src/Article/
+```
 
-Each folder contains multiple text files describing different aspects of the article:
+Each article folder contains:
 
+```
 Article/<id>/
 ├── articleLink.txt     # Wikipedia URL of the article
 ├── bodyText.txt        # Main article content
 ├── bodyLinks.txt       # Internal links within the article
 ├── externalLinks.txt   # External references
 ├── headingsText.txt    # Section headings
+```
 
-###Usage in This Project
+---
 
-articleLink.txt is used to extract and normalize article titles for the Trie (autocomplete)
+## Usage in This Project
 
-bodyText.txt is used for TF-IDF computation
+* `articleLink.txt` → used to extract and normalize article titles for the Trie (autocomplete)
+* `bodyText.txt` → used for TF-IDF computation
+* `bodyLinks.txt` → used to build the PageRank graph
+* Other files can be used for extended ranking or additional features
 
-bodyLinks.txt is used to build the PageRank graph
+---
 
-Other files can be used for extended ranking or features
+## Ranking Formula
 
-###Notes
+Each article is scored using a weighted combination of TF-IDF and PageRank:
 
-Folder names act as unique article IDs
+```
+score = 0.8 * (tfidf / max_tfidf) + 0.2 * (pagerank / max_pagerank)
+```
 
-The dataset is not included in this repository due to size
+* TF-IDF prioritizes query relevance
+* PageRank captures global importance
+* Normalization ensures both values contribute proportionally
 
-Make sure the structure matches exactly, otherwise indexing will fail
+---
+
+## Notes
+
+* Folder names act as unique article IDs
+* The dataset is not included in this repository due to size
+* The directory structure must match exactly, otherwise indexing will fail
 
 
 ---
